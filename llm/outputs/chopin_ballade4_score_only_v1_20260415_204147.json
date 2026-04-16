@@ -1,0 +1,337 @@
+{
+  "piece_id": "chopin_ballade4",
+  "prompt_file": "llm/prompts/score_only_v1.md",
+  "prompt_sha256": "fd133f3f07c16ba0b9e547d4ef8a4599110a5420a414c9b6295a8ffcadbbfc13",
+  "input_json": {
+    "piece_id": "chopin_ballade4",
+    "score_beat_max": 1452.0,
+    "markings": [
+      {
+        "beat": 0.0,
+        "text": "Andante con moto",
+        "kind": "tempo"
+      },
+      {
+        "beat": 27.5,
+        "text": "riten.",
+        "kind": "rall"
+      },
+      {
+        "beat": 39.0,
+        "text": "fermata",
+        "kind": "fermata"
+      },
+      {
+        "beat": 330.0,
+        "text": "ten.",
+        "kind": "tempo"
+      },
+      {
+        "beat": 441.0,
+        "text": "accel.",
+        "kind": "accel"
+      },
+      {
+        "beat": 712.0,
+        "text": "poco rit.",
+        "kind": "rall"
+      },
+      {
+        "beat": 762.0,
+        "text": "ritard",
+        "kind": "rall"
+      },
+      {
+        "beat": 798.0,
+        "text": "rit.",
+        "kind": "rall"
+      },
+      {
+        "beat": 801.0,
+        "text": "fermata",
+        "kind": "fermata"
+      },
+      {
+        "beat": 801.0,
+        "text": "fermata",
+        "kind": "fermata"
+      },
+      {
+        "beat": 814.5,
+        "text": "rallent",
+        "kind": "rall"
+      },
+      {
+        "beat": 819.5,
+        "text": "fermata",
+        "kind": "fermata"
+      },
+      {
+        "beat": 988.0,
+        "text": "poco a poco accel.",
+        "kind": "accel"
+      },
+      {
+        "beat": 1026.0,
+        "text": "ten.",
+        "kind": "tempo"
+      },
+      {
+        "beat": 1221.0,
+        "text": "ritard",
+        "kind": "rall"
+      },
+      {
+        "beat": 1228.0,
+        "text": "fermata",
+        "kind": "fermata"
+      },
+      {
+        "beat": 1228.0,
+        "text": "fermata",
+        "kind": "fermata"
+      },
+      {
+        "beat": 1446.0,
+        "text": "fermata",
+        "kind": "fermata"
+      },
+      {
+        "beat": 1446.0,
+        "text": "fermata",
+        "kind": "fermata"
+      }
+    ]
+  },
+  "rendered_prompt": "# SCORPION LLM Intent — Score-Only Prompt (v1)\n\n**Version**: v1 (2026-04-15)\n**Purpose**: Convert a MusicXML's printed Italian tempo/character markings into a\nper-beat tempo-ratio trajectory $\\gamma(b) \\in (0, 5]$ that represents the\nperformer's *expected* intent before performance begins.\n\n**Input to the LLM** (filled in at call time):\n- `PIECE_ID`: piece identifier (e.g. `chopin_ballade1`)\n- `SCORE_BEAT_MAX`: total beat count of the score (e.g. 1452)\n- `MARKINGS`: ordered list of `{beat, text, kind}` extracted by partitura from\n  the MusicXML. `kind ∈ {tempo, accel, rall, fermata}`.\n\n**Output contract** (enforced JSON schema — any deviation is a failure):\n```json\n{\n  \"piece_id\": \"<string>\",\n  \"score_beat_max\": <float>,\n  \"markings_annotated\": [\n    {\n      \"beat\": <float>,\n      \"text\": \"<string>\",\n      \"kind\": \"<tempo|accel|rall|fermata>\",\n      \"gamma\": <float>,\n      \"reasoning\": \"<string, one short sentence>\"\n    }\n  ],\n  \"sections\": [\n    [<start_beat>, <end_beat>, <gamma_start>, <gamma_end>]\n  ]\n}\n```\n\n**Conventions** (fixed before any ASAP evaluation; `gamma=1` means the XML-encoded\nscore tempo, `gamma<1` means slower, `gamma>1` means faster):\n\n- `grave` 0.25, `largo` 0.27, `lento` 0.30, `larghetto` 0.37\n- `adagio` 0.41, `adagietto` 0.50\n- `andante` 0.67, `andantino` 0.74\n- `moderato` 1.00, `allegretto` 1.28\n- `allegro` 1.82, `allegro moderato` 1.57, `allegro non troppo` 1.65\n- `vivace` 2.23, `vivo` 2.23\n- `presto` 3.00, `prestissimo` 3.67\n- `a tempo` 1.00, `tempo primo` 1.00, `tempo i` 1.00\n- `meno mosso` 0.74, `più mosso` 1.35\n- `agitato` 1.49, `con moto` 1.22\n- `sostenuto` 0.82, `tranquillo` 0.74\n- `appassionato` 1.35, `animato` 1.35\n- `maestoso` 0.67, `cantabile` 0.90\n- `ritenuto`, `rall.`, `riten.` apply a 25% slowdown relative to the prevailing\n  ratio (multiply by 0.75).\n- `accelerando`, `accel.`, `stringendo` apply a 35% speedup (multiply by 1.35).\n- `poco` prefix weakens magnitude ×0.5; `sempre più` / `molto` strengthen ×1.3.\n- `fermata` is a local hold (set `gamma=0.35` for the immediate beat only).\n- Unknown markings: reason from context; default `gamma=1` unless intent is clear.\n\n**Rules for the `sections` array**:\n\n1. Section boundaries **must** align with marking positions (within 0.5 beats).\n2. Between two tempo markings, γ is **piecewise-linear**: start = γ at the first\n   marking, end = γ at the next marking. If both markings are the same γ (no\n   ramp in between), emit a flat section (`gamma_start == gamma_end`).\n3. A `rall./ritenuto` preceding a `tempo` marking generates a **linear ramp from\n   the previous tempo γ to 0.75× that γ** over the last 4 beats before the\n   tempo marking, then jumps back to the new tempo.\n4. An `accelerando` preceding a `tempo` marking generates a **linear ramp from\n   the previous tempo γ to 1.35× that γ** over the last 4 beats.\n5. Fermatas contribute a single-beat dip to γ=0.35 that does NOT propagate.\n6. `sections` must fully cover `[0, score_beat_max]` with no gaps.\n\n**Reasoning requirement**: for every marking in `markings_annotated`, output a\none-sentence `reasoning` explaining why that γ was chosen. This field is for\naudit, not for downstream use.\n\n**Determinism requirement**: calling this prompt with the same input at\n`temperature=0` must yield the same output JSON modulo whitespace. The lookup\nconstants above are FIXED — do not rescale them even if they seem aggressive.\n\n---\n\n## Input data block (filled at call time)\n\n```json\n{\n  \"piece_id\": \"chopin_ballade4\",\n  \"score_beat_max\": 1452.0,\n  \"markings\": [\n    {\n      \"beat\": 0.0,\n      \"text\": \"Andante con moto\",\n      \"kind\": \"tempo\"\n    },\n    {\n      \"beat\": 27.5,\n      \"text\": \"riten.\",\n      \"kind\": \"rall\"\n    },\n    {\n      \"beat\": 39.0,\n      \"text\": \"fermata\",\n      \"kind\": \"fermata\"\n    },\n    {\n      \"beat\": 330.0,\n      \"text\": \"ten.\",\n      \"kind\": \"tempo\"\n    },\n    {\n      \"beat\": 441.0,\n      \"text\": \"accel.\",\n      \"kind\": \"accel\"\n    },\n    {\n      \"beat\": 712.0,\n      \"text\": \"poco rit.\",\n      \"kind\": \"rall\"\n    },\n    {\n      \"beat\": 762.0,\n      \"text\": \"ritard\",\n      \"kind\": \"rall\"\n    },\n    {\n      \"beat\": 798.0,\n      \"text\": \"rit.\",\n      \"kind\": \"rall\"\n    },\n    {\n      \"beat\": 801.0,\n      \"text\": \"fermata\",\n      \"kind\": \"fermata\"\n    },\n    {\n      \"beat\": 801.0,\n      \"text\": \"fermata\",\n      \"kind\": \"fermata\"\n    },\n    {\n      \"beat\": 814.5,\n      \"text\": \"rallent\",\n      \"kind\": \"rall\"\n    },\n    {\n      \"beat\": 819.5,\n      \"text\": \"fermata\",\n      \"kind\": \"fermata\"\n    },\n    {\n      \"beat\": 988.0,\n      \"text\": \"poco a poco accel.\",\n      \"kind\": \"accel\"\n    },\n    {\n      \"beat\": 1026.0,\n      \"text\": \"ten.\",\n      \"kind\": \"tempo\"\n    },\n    {\n      \"beat\": 1221.0,\n      \"text\": \"ritard\",\n      \"kind\": \"rall\"\n    },\n    {\n      \"beat\": 1228.0,\n      \"text\": \"fermata\",\n      \"kind\": \"fermata\"\n    },\n    {\n      \"beat\": 1228.0,\n      \"text\": \"fermata\",\n      \"kind\": \"fermata\"\n    },\n    {\n      \"beat\": 1446.0,\n      \"text\": \"fermata\",\n      \"kind\": \"fermata\"\n    },\n    {\n      \"beat\": 1446.0,\n      \"text\": \"fermata\",\n      \"kind\": \"fermata\"\n    }\n  ]\n}\n```\n\nProduce ONLY the output JSON. No commentary, no Markdown fencing.\n",
+  "timestamp_utc": "20260415_204147",
+  "mode": "live",
+  "api_result": {
+    "backend": "claude_cli",
+    "binary": "/ssddata/home/ykim3098/.cursor-server/extensions/anthropic.claude-code-2.1.109-linux-x64/resources/native-binary/claude",
+    "model": "claude-code-default",
+    "temperature": 0.0,
+    "elapsed_s": 203.68,
+    "stderr": "",
+    "content": "```json\n{\n  \"piece_id\": \"chopin_ballade4\",\n  \"score_beat_max\": 1452.0,\n  \"markings_annotated\": [\n    {\n      \"beat\": 0.0,\n      \"text\": \"Andante con moto\",\n      \"kind\": \"tempo\",\n      \"gamma\": 0.82,\n      \"reasoning\": \"Andante (0.67) combined with con moto modifier (x1.22) yields a flowing andante at ~0.82.\"\n    },\n    {\n      \"beat\": 27.5,\n      \"text\": \"riten.\",\n      \"kind\": \"rall\",\n      \"gamma\": 0.62,\n      \"reasoning\": \"Ritenuto applies 0.75x to prevailing 0.82, giving 0.615.\"\n    },\n    {\n      \"beat\": 39.0,\n      \"text\": \"fermata\",\n      \"kind\": \"fermata\",\n      \"gamma\": 0.35,\n      \"reasoning\": \"Fermata is a single-beat hold fixed at 0.35 per convention.\"\n    },\n    {\n      \"beat\": 330.0,\n      \"text\": \"ten.\",\n      \"kind\": \"tempo\",\n      \"gamma\": 0.82,\n      \"reasoning\": \"Tenuto marked as tempo restores the prevailing Andante con moto (0.82).\"\n    },\n    {\n      \"beat\": 441.0,\n      \"text\": \"accel.\",\n      \"kind\": \"accel\",\n      \"gamma\": 1.11,\n      \"reasoning\": \"Accelerando applies 1.35x to prevailing 0.82, giving ~1.107.\"\n    },\n    {\n      \"beat\": 712.0,\n      \"text\": \"poco rit.\",\n      \"kind\": \"rall\",\n      \"gamma\": 0.97,\n      \"reasoning\": \"Poco weakens rit magnitude x0.5, so multiplier is 0.875 on prevailing 1.107.\"\n    },\n    {\n      \"beat\": 762.0,\n      \"text\": \"ritard\",\n      \"kind\": \"rall\",\n      \"gamma\": 0.73,\n      \"reasoning\": \"Ritard applies 0.75x to prevailing 0.97.\"\n    },\n    {\n      \"beat\": 798.0,\n      \"text\": \"rit.\",\n      \"kind\": \"rall\",\n      \"gamma\": 0.55,\n      \"reasoning\": \"Another rit applies 0.75x to prevailing 0.73.\"\n    },\n    {\n      \"beat\": 801.0,\n      \"text\": \"fermata\",\n      \"kind\": \"fermata\",\n      \"gamma\": 0.35,\n      \"reasoning\": \"Fermata single-beat hold at 0.35.\"\n    },\n    {\n      \"beat\": 801.0,\n      \"text\": \"fermata\",\n      \"kind\": \"fermata\",\n      \"gamma\": 0.35,\n      \"reasoning\": \"Duplicate fermata at same beat; still a single-beat hold at 0.35.\"\n    },\n    {\n      \"beat\": 814.5,\n      \"text\": \"rallent\",\n      \"kind\": \"rall\",\n      \"gamma\": 0.41,\n      \"reasoning\": \"Rallentando applies 0.75x to prevailing 0.55 (fermata did not propagate).\"\n    },\n    {\n      \"beat\": 819.5,\n      \"text\": \"fermata\",\n      \"kind\": \"fermata\",\n      \"gamma\": 0.35,\n      \"reasoning\": \"Fermata single-beat hold at 0.35.\"\n    },\n    {\n      \"beat\": 988.0,\n      \"text\": \"poco a poco accel.\",\n      \"kind\": \"accel\",\n      \"gamma\": 0.48,\n      \"reasoning\": \"Poco weakens accel x0.5 so multiplier 1.175 on prevailing 0.41 yields ~0.482.\"\n    },\n    {\n      \"beat\": 1026.0,\n      \"text\": \"ten.\",\n      \"kind\": \"tempo\",\n      \"gamma\": 0.82,\n      \"reasoning\": \"Tenuto as tempo restores the main Andante con moto at 0.82.\"\n    },\n    {\n      \"beat\": 1221.0,\n      \"text\": \"ritard\",\n      \"kind\": \"rall\",\n      \"gamma\": 0.62,\n      \"reasoning\": \"Ritard applies 0.75x to prevailing 0.82.\"\n    },\n    {\n      \"beat\": 1228.0,\n      \"text\": \"fermata\",\n      \"kind\": \"fermata\",\n      \"gamma\": 0.35,\n      \"reasoning\": \"Fermata single-beat hold at 0.35.\"\n    },\n    {\n      \"beat\": 1228.0,\n      \"text\": \"fermata\",\n      \"kind\": \"fermata\",\n      \"gamma\": 0.35,\n      \"reasoning\": \"Duplicate fermata at same beat; still 0.35.\"\n    },\n    {\n      \"beat\": 1446.0,\n      \"text\": \"fermata\",\n      \"kind\": \"fermata\",\n      \"gamma\": 0.35,\n      \"reasoning\": \"Fermata single-beat hold at 0.35.\"\n    },\n    {\n      \"beat\": 1446.0,\n      \"text\": \"fermata\",\n      \"kind\": \"fermata\",\n      \"gamma\": 0.35,\n      \"reasoning\": \"Duplicate final fermata; still 0.35.\"\n    }\n  ],\n  \"sections\": [\n    [0.0, 27.5, 0.82, 0.82],\n    [27.5, 326.0, 0.62, 0.62],\n    [326.0, 330.0, 0.62, 0.82],\n    [330.0, 441.0, 0.82, 0.82],\n    [441.0, 712.0, 1.11, 0.97],\n    [712.0, 762.0, 0.97, 0.73],\n    [762.0, 798.0, 0.73, 0.55],\n    [798.0, 814.5, 0.55, 0.41],\n    [814.5, 988.0, 0.41, 0.41],\n    [988.0, 1022.0, 0.48, 0.48],\n    [1022.0, 1026.0, 0.48, 0.82],\n    [1026.0, 1221.0, 0.82, 0.82],\n    [1221.0, 1452.0, 0.62, 0.62]\n  ]\n}\n```\n"
+  },
+  "parsed_response": {
+    "piece_id": "chopin_ballade4",
+    "score_beat_max": 1452.0,
+    "markings_annotated": [
+      {
+        "beat": 0.0,
+        "text": "Andante con moto",
+        "kind": "tempo",
+        "gamma": 0.82,
+        "reasoning": "Andante (0.67) combined with con moto modifier (x1.22) yields a flowing andante at ~0.82."
+      },
+      {
+        "beat": 27.5,
+        "text": "riten.",
+        "kind": "rall",
+        "gamma": 0.62,
+        "reasoning": "Ritenuto applies 0.75x to prevailing 0.82, giving 0.615."
+      },
+      {
+        "beat": 39.0,
+        "text": "fermata",
+        "kind": "fermata",
+        "gamma": 0.35,
+        "reasoning": "Fermata is a single-beat hold fixed at 0.35 per convention."
+      },
+      {
+        "beat": 330.0,
+        "text": "ten.",
+        "kind": "tempo",
+        "gamma": 0.82,
+        "reasoning": "Tenuto marked as tempo restores the prevailing Andante con moto (0.82)."
+      },
+      {
+        "beat": 441.0,
+        "text": "accel.",
+        "kind": "accel",
+        "gamma": 1.11,
+        "reasoning": "Accelerando applies 1.35x to prevailing 0.82, giving ~1.107."
+      },
+      {
+        "beat": 712.0,
+        "text": "poco rit.",
+        "kind": "rall",
+        "gamma": 0.97,
+        "reasoning": "Poco weakens rit magnitude x0.5, so multiplier is 0.875 on prevailing 1.107."
+      },
+      {
+        "beat": 762.0,
+        "text": "ritard",
+        "kind": "rall",
+        "gamma": 0.73,
+        "reasoning": "Ritard applies 0.75x to prevailing 0.97."
+      },
+      {
+        "beat": 798.0,
+        "text": "rit.",
+        "kind": "rall",
+        "gamma": 0.55,
+        "reasoning": "Another rit applies 0.75x to prevailing 0.73."
+      },
+      {
+        "beat": 801.0,
+        "text": "fermata",
+        "kind": "fermata",
+        "gamma": 0.35,
+        "reasoning": "Fermata single-beat hold at 0.35."
+      },
+      {
+        "beat": 801.0,
+        "text": "fermata",
+        "kind": "fermata",
+        "gamma": 0.35,
+        "reasoning": "Duplicate fermata at same beat; still a single-beat hold at 0.35."
+      },
+      {
+        "beat": 814.5,
+        "text": "rallent",
+        "kind": "rall",
+        "gamma": 0.41,
+        "reasoning": "Rallentando applies 0.75x to prevailing 0.55 (fermata did not propagate)."
+      },
+      {
+        "beat": 819.5,
+        "text": "fermata",
+        "kind": "fermata",
+        "gamma": 0.35,
+        "reasoning": "Fermata single-beat hold at 0.35."
+      },
+      {
+        "beat": 988.0,
+        "text": "poco a poco accel.",
+        "kind": "accel",
+        "gamma": 0.48,
+        "reasoning": "Poco weakens accel x0.5 so multiplier 1.175 on prevailing 0.41 yields ~0.482."
+      },
+      {
+        "beat": 1026.0,
+        "text": "ten.",
+        "kind": "tempo",
+        "gamma": 0.82,
+        "reasoning": "Tenuto as tempo restores the main Andante con moto at 0.82."
+      },
+      {
+        "beat": 1221.0,
+        "text": "ritard",
+        "kind": "rall",
+        "gamma": 0.62,
+        "reasoning": "Ritard applies 0.75x to prevailing 0.82."
+      },
+      {
+        "beat": 1228.0,
+        "text": "fermata",
+        "kind": "fermata",
+        "gamma": 0.35,
+        "reasoning": "Fermata single-beat hold at 0.35."
+      },
+      {
+        "beat": 1228.0,
+        "text": "fermata",
+        "kind": "fermata",
+        "gamma": 0.35,
+        "reasoning": "Duplicate fermata at same beat; still 0.35."
+      },
+      {
+        "beat": 1446.0,
+        "text": "fermata",
+        "kind": "fermata",
+        "gamma": 0.35,
+        "reasoning": "Fermata single-beat hold at 0.35."
+      },
+      {
+        "beat": 1446.0,
+        "text": "fermata",
+        "kind": "fermata",
+        "gamma": 0.35,
+        "reasoning": "Duplicate final fermata; still 0.35."
+      }
+    ],
+    "sections": [
+      [
+        0.0,
+        27.5,
+        0.82,
+        0.82
+      ],
+      [
+        27.5,
+        326.0,
+        0.62,
+        0.62
+      ],
+      [
+        326.0,
+        330.0,
+        0.62,
+        0.82
+      ],
+      [
+        330.0,
+        441.0,
+        0.82,
+        0.82
+      ],
+      [
+        441.0,
+        712.0,
+        1.11,
+        0.97
+      ],
+      [
+        712.0,
+        762.0,
+        0.97,
+        0.73
+      ],
+      [
+        762.0,
+        798.0,
+        0.73,
+        0.55
+      ],
+      [
+        798.0,
+        814.5,
+        0.55,
+        0.41
+      ],
+      [
+        814.5,
+        988.0,
+        0.41,
+        0.41
+      ],
+      [
+        988.0,
+        1022.0,
+        0.48,
+        0.48
+      ],
+      [
+        1022.0,
+        1026.0,
+        0.48,
+        0.82
+      ],
+      [
+        1026.0,
+        1221.0,
+        0.82,
+        0.82
+      ],
+      [
+        1221.0,
+        1452.0,
+        0.62,
+        0.62
+      ]
+    ]
+  }
+}

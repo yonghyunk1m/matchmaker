@@ -1,0 +1,85 @@
+{
+  "piece_id": "chopin_ballade3",
+  "prompt_file": "llm/prompts/score_only_v1.md",
+  "prompt_sha256": "fd133f3f07c16ba0b9e547d4ef8a4599110a5420a414c9b6295a8ffcadbbfc13",
+  "input_json": {
+    "piece_id": "chopin_ballade3",
+    "score_beat_max": 1446.0,
+    "markings": [
+      {
+        "beat": 0.0,
+        "text": "Allegretto",
+        "kind": "tempo"
+      },
+      {
+        "beat": 1440.0,
+        "text": "fermata",
+        "kind": "fermata"
+      },
+      {
+        "beat": 1440.0,
+        "text": "fermata",
+        "kind": "fermata"
+      }
+    ]
+  },
+  "rendered_prompt": "# SCORPION LLM Intent — Score-Only Prompt (v1)\n\n**Version**: v1 (2026-04-15)\n**Purpose**: Convert a MusicXML's printed Italian tempo/character markings into a\nper-beat tempo-ratio trajectory $\\gamma(b) \\in (0, 5]$ that represents the\nperformer's *expected* intent before performance begins.\n\n**Input to the LLM** (filled in at call time):\n- `PIECE_ID`: piece identifier (e.g. `chopin_ballade1`)\n- `SCORE_BEAT_MAX`: total beat count of the score (e.g. 1452)\n- `MARKINGS`: ordered list of `{beat, text, kind}` extracted by partitura from\n  the MusicXML. `kind ∈ {tempo, accel, rall, fermata}`.\n\n**Output contract** (enforced JSON schema — any deviation is a failure):\n```json\n{\n  \"piece_id\": \"<string>\",\n  \"score_beat_max\": <float>,\n  \"markings_annotated\": [\n    {\n      \"beat\": <float>,\n      \"text\": \"<string>\",\n      \"kind\": \"<tempo|accel|rall|fermata>\",\n      \"gamma\": <float>,\n      \"reasoning\": \"<string, one short sentence>\"\n    }\n  ],\n  \"sections\": [\n    [<start_beat>, <end_beat>, <gamma_start>, <gamma_end>]\n  ]\n}\n```\n\n**Conventions** (fixed before any ASAP evaluation; `gamma=1` means the XML-encoded\nscore tempo, `gamma<1` means slower, `gamma>1` means faster):\n\n- `grave` 0.25, `largo` 0.27, `lento` 0.30, `larghetto` 0.37\n- `adagio` 0.41, `adagietto` 0.50\n- `andante` 0.67, `andantino` 0.74\n- `moderato` 1.00, `allegretto` 1.28\n- `allegro` 1.82, `allegro moderato` 1.57, `allegro non troppo` 1.65\n- `vivace` 2.23, `vivo` 2.23\n- `presto` 3.00, `prestissimo` 3.67\n- `a tempo` 1.00, `tempo primo` 1.00, `tempo i` 1.00\n- `meno mosso` 0.74, `più mosso` 1.35\n- `agitato` 1.49, `con moto` 1.22\n- `sostenuto` 0.82, `tranquillo` 0.74\n- `appassionato` 1.35, `animato` 1.35\n- `maestoso` 0.67, `cantabile` 0.90\n- `ritenuto`, `rall.`, `riten.` apply a 25% slowdown relative to the prevailing\n  ratio (multiply by 0.75).\n- `accelerando`, `accel.`, `stringendo` apply a 35% speedup (multiply by 1.35).\n- `poco` prefix weakens magnitude ×0.5; `sempre più` / `molto` strengthen ×1.3.\n- `fermata` is a local hold (set `gamma=0.35` for the immediate beat only).\n- Unknown markings: reason from context; default `gamma=1` unless intent is clear.\n\n**Rules for the `sections` array**:\n\n1. Section boundaries **must** align with marking positions (within 0.5 beats).\n2. Between two tempo markings, γ is **piecewise-linear**: start = γ at the first\n   marking, end = γ at the next marking. If both markings are the same γ (no\n   ramp in between), emit a flat section (`gamma_start == gamma_end`).\n3. A `rall./ritenuto` preceding a `tempo` marking generates a **linear ramp from\n   the previous tempo γ to 0.75× that γ** over the last 4 beats before the\n   tempo marking, then jumps back to the new tempo.\n4. An `accelerando` preceding a `tempo` marking generates a **linear ramp from\n   the previous tempo γ to 1.35× that γ** over the last 4 beats.\n5. Fermatas contribute a single-beat dip to γ=0.35 that does NOT propagate.\n6. `sections` must fully cover `[0, score_beat_max]` with no gaps.\n\n**Reasoning requirement**: for every marking in `markings_annotated`, output a\none-sentence `reasoning` explaining why that γ was chosen. This field is for\naudit, not for downstream use.\n\n**Determinism requirement**: calling this prompt with the same input at\n`temperature=0` must yield the same output JSON modulo whitespace. The lookup\nconstants above are FIXED — do not rescale them even if they seem aggressive.\n\n---\n\n## Input data block (filled at call time)\n\n```json\n{\n  \"piece_id\": \"chopin_ballade3\",\n  \"score_beat_max\": 1446.0,\n  \"markings\": [\n    {\n      \"beat\": 0.0,\n      \"text\": \"Allegretto\",\n      \"kind\": \"tempo\"\n    },\n    {\n      \"beat\": 1440.0,\n      \"text\": \"fermata\",\n      \"kind\": \"fermata\"\n    },\n    {\n      \"beat\": 1440.0,\n      \"text\": \"fermata\",\n      \"kind\": \"fermata\"\n    }\n  ]\n}\n```\n\nProduce ONLY the output JSON. No commentary, no Markdown fencing.\n",
+  "timestamp_utc": "20260415_204141",
+  "mode": "live",
+  "api_result": {
+    "backend": "claude_cli",
+    "binary": "/ssddata/home/ykim3098/.cursor-server/extensions/anthropic.claude-code-2.1.109-linux-x64/resources/native-binary/claude",
+    "model": "claude-code-default",
+    "temperature": 0.0,
+    "elapsed_s": 4.54,
+    "stderr": "",
+    "content": "{\"piece_id\":\"chopin_ballade3\",\"score_beat_max\":1446.0,\"markings_annotated\":[{\"beat\":0.0,\"text\":\"Allegretto\",\"kind\":\"tempo\",\"gamma\":1.28,\"reasoning\":\"Allegretto maps to the fixed lookup value 1.28.\"},{\"beat\":1440.0,\"text\":\"fermata\",\"kind\":\"fermata\",\"gamma\":0.35,\"reasoning\":\"Fermata is a single-beat local hold set to 0.35.\"},{\"beat\":1440.0,\"text\":\"fermata\",\"kind\":\"fermata\",\"gamma\":0.35,\"reasoning\":\"Duplicate fermata at the same beat; same single-beat hold value.\"}],\"sections\":[[0.0,1440.0,1.28,1.28],[1440.0,1441.0,0.35,0.35],[1441.0,1446.0,1.28,1.28]]}\n"
+  },
+  "parsed_response": {
+    "piece_id": "chopin_ballade3",
+    "score_beat_max": 1446.0,
+    "markings_annotated": [
+      {
+        "beat": 0.0,
+        "text": "Allegretto",
+        "kind": "tempo",
+        "gamma": 1.28,
+        "reasoning": "Allegretto maps to the fixed lookup value 1.28."
+      },
+      {
+        "beat": 1440.0,
+        "text": "fermata",
+        "kind": "fermata",
+        "gamma": 0.35,
+        "reasoning": "Fermata is a single-beat local hold set to 0.35."
+      },
+      {
+        "beat": 1440.0,
+        "text": "fermata",
+        "kind": "fermata",
+        "gamma": 0.35,
+        "reasoning": "Duplicate fermata at the same beat; same single-beat hold value."
+      }
+    ],
+    "sections": [
+      [
+        0.0,
+        1440.0,
+        1.28,
+        1.28
+      ],
+      [
+        1440.0,
+        1441.0,
+        0.35,
+        0.35
+      ],
+      [
+        1441.0,
+        1446.0,
+        1.28,
+        1.28
+      ]
+    ]
+  }
+}

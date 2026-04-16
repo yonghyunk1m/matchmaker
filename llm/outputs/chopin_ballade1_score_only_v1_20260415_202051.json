@@ -1,0 +1,511 @@
+{
+  "piece_id": "chopin_ballade1",
+  "prompt_file": "llm/prompts/score_only_v1.md",
+  "prompt_sha256": "fd133f3f07c16ba0b9e547d4ef8a4599110a5420a414c9b6295a8ffcadbbfc13",
+  "input_json": {
+    "piece_id": "chopin_ballade1",
+    "score_beat_max": 1456.0,
+    "markings": [
+      {
+        "beat": 0.0,
+        "text": "Lento",
+        "kind": "tempo"
+      },
+      {
+        "beat": 28.0,
+        "text": "Moderato",
+        "kind": "tempo"
+      },
+      {
+        "beat": 166.0,
+        "text": "ritenuto",
+        "kind": "rall"
+      },
+      {
+        "beat": 221.0,
+        "text": "agitato",
+        "kind": "tempo"
+      },
+      {
+        "beat": 244.0,
+        "text": "sempre più mosso",
+        "kind": "tempo"
+      },
+      {
+        "beat": 370.0,
+        "text": "riten.",
+        "kind": "rall"
+      },
+      {
+        "beat": 387.0,
+        "text": "Meno mosso",
+        "kind": "tempo"
+      },
+      {
+        "beat": 532.0,
+        "text": "rall.",
+        "kind": "rall"
+      },
+      {
+        "beat": 691.0,
+        "text": "ten.",
+        "kind": "tempo"
+      },
+      {
+        "beat": 703.0,
+        "text": "ten.",
+        "kind": "tempo"
+      },
+      {
+        "beat": 736.0,
+        "text": "più animato",
+        "kind": "tempo"
+      },
+      {
+        "beat": 808.0,
+        "text": "animato",
+        "kind": "tempo"
+      },
+      {
+        "beat": 1066.0,
+        "text": "ten.",
+        "kind": "tempo"
+      },
+      {
+        "beat": 1072.0,
+        "text": "ten.",
+        "kind": "tempo"
+      },
+      {
+        "beat": 1126.0,
+        "text": "riten.",
+        "kind": "rall"
+      },
+      {
+        "beat": 1132.0,
+        "text": "più rall.",
+        "kind": "rall"
+      },
+      {
+        "beat": 1144.0,
+        "text": "Meno mosso",
+        "kind": "tempo"
+      },
+      {
+        "beat": 1225.0,
+        "text": "poco riten.",
+        "kind": "rall"
+      },
+      {
+        "beat": 1228.0,
+        "text": "Presto con fuoco",
+        "kind": "tempo"
+      },
+      {
+        "beat": 1406.0,
+        "text": "riten.",
+        "kind": "rall"
+      },
+      {
+        "beat": 1410.33,
+        "text": "accel.",
+        "kind": "accel"
+      },
+      {
+        "beat": 1422.0,
+        "text": "riten.",
+        "kind": "rall"
+      },
+      {
+        "beat": 1426.33,
+        "text": "accel.",
+        "kind": "accel"
+      },
+      {
+        "beat": 1430.0,
+        "text": "poco riten.",
+        "kind": "rall"
+      },
+      {
+        "beat": 1434.0,
+        "text": "accelerando",
+        "kind": "accel"
+      },
+      {
+        "beat": 1452.0,
+        "text": "fermata",
+        "kind": "fermata"
+      },
+      {
+        "beat": 1452.0,
+        "text": "fermata",
+        "kind": "fermata"
+      }
+    ]
+  },
+  "rendered_prompt": "# SCORPION LLM Intent — Score-Only Prompt (v1)\n\n**Version**: v1 (2026-04-15)\n**Purpose**: Convert a MusicXML's printed Italian tempo/character markings into a\nper-beat tempo-ratio trajectory $\\gamma(b) \\in (0, 5]$ that represents the\nperformer's *expected* intent before performance begins.\n\n**Input to the LLM** (filled in at call time):\n- `PIECE_ID`: piece identifier (e.g. `chopin_ballade1`)\n- `SCORE_BEAT_MAX`: total beat count of the score (e.g. 1452)\n- `MARKINGS`: ordered list of `{beat, text, kind}` extracted by partitura from\n  the MusicXML. `kind ∈ {tempo, accel, rall, fermata}`.\n\n**Output contract** (enforced JSON schema — any deviation is a failure):\n```json\n{\n  \"piece_id\": \"<string>\",\n  \"score_beat_max\": <float>,\n  \"markings_annotated\": [\n    {\n      \"beat\": <float>,\n      \"text\": \"<string>\",\n      \"kind\": \"<tempo|accel|rall|fermata>\",\n      \"gamma\": <float>,\n      \"reasoning\": \"<string, one short sentence>\"\n    }\n  ],\n  \"sections\": [\n    [<start_beat>, <end_beat>, <gamma_start>, <gamma_end>]\n  ]\n}\n```\n\n**Conventions** (fixed before any ASAP evaluation; `gamma=1` means the XML-encoded\nscore tempo, `gamma<1` means slower, `gamma>1` means faster):\n\n- `grave` 0.25, `largo` 0.27, `lento` 0.30, `larghetto` 0.37\n- `adagio` 0.41, `adagietto` 0.50\n- `andante` 0.67, `andantino` 0.74\n- `moderato` 1.00, `allegretto` 1.28\n- `allegro` 1.82, `allegro moderato` 1.57, `allegro non troppo` 1.65\n- `vivace` 2.23, `vivo` 2.23\n- `presto` 3.00, `prestissimo` 3.67\n- `a tempo` 1.00, `tempo primo` 1.00, `tempo i` 1.00\n- `meno mosso` 0.74, `più mosso` 1.35\n- `agitato` 1.49, `con moto` 1.22\n- `sostenuto` 0.82, `tranquillo` 0.74\n- `appassionato` 1.35, `animato` 1.35\n- `maestoso` 0.67, `cantabile` 0.90\n- `ritenuto`, `rall.`, `riten.` apply a 25% slowdown relative to the prevailing\n  ratio (multiply by 0.75).\n- `accelerando`, `accel.`, `stringendo` apply a 35% speedup (multiply by 1.35).\n- `poco` prefix weakens magnitude ×0.5; `sempre più` / `molto` strengthen ×1.3.\n- `fermata` is a local hold (set `gamma=0.35` for the immediate beat only).\n- Unknown markings: reason from context; default `gamma=1` unless intent is clear.\n\n**Rules for the `sections` array**:\n\n1. Section boundaries **must** align with marking positions (within 0.5 beats).\n2. Between two tempo markings, γ is **piecewise-linear**: start = γ at the first\n   marking, end = γ at the next marking. If both markings are the same γ (no\n   ramp in between), emit a flat section (`gamma_start == gamma_end`).\n3. A `rall./ritenuto` preceding a `tempo` marking generates a **linear ramp from\n   the previous tempo γ to 0.75× that γ** over the last 4 beats before the\n   tempo marking, then jumps back to the new tempo.\n4. An `accelerando` preceding a `tempo` marking generates a **linear ramp from\n   the previous tempo γ to 1.35× that γ** over the last 4 beats.\n5. Fermatas contribute a single-beat dip to γ=0.35 that does NOT propagate.\n6. `sections` must fully cover `[0, score_beat_max]` with no gaps.\n\n**Reasoning requirement**: for every marking in `markings_annotated`, output a\none-sentence `reasoning` explaining why that γ was chosen. This field is for\naudit, not for downstream use.\n\n**Determinism requirement**: calling this prompt with the same input at\n`temperature=0` must yield the same output JSON modulo whitespace. The lookup\nconstants above are FIXED — do not rescale them even if they seem aggressive.\n\n---\n\n## Input data block (filled at call time)\n\n```json\n{\n  \"piece_id\": \"chopin_ballade1\",\n  \"score_beat_max\": 1456.0,\n  \"markings\": [\n    {\n      \"beat\": 0.0,\n      \"text\": \"Lento\",\n      \"kind\": \"tempo\"\n    },\n    {\n      \"beat\": 28.0,\n      \"text\": \"Moderato\",\n      \"kind\": \"tempo\"\n    },\n    {\n      \"beat\": 166.0,\n      \"text\": \"ritenuto\",\n      \"kind\": \"rall\"\n    },\n    {\n      \"beat\": 221.0,\n      \"text\": \"agitato\",\n      \"kind\": \"tempo\"\n    },\n    {\n      \"beat\": 244.0,\n      \"text\": \"sempre più mosso\",\n      \"kind\": \"tempo\"\n    },\n    {\n      \"beat\": 370.0,\n      \"text\": \"riten.\",\n      \"kind\": \"rall\"\n    },\n    {\n      \"beat\": 387.0,\n      \"text\": \"Meno mosso\",\n      \"kind\": \"tempo\"\n    },\n    {\n      \"beat\": 532.0,\n      \"text\": \"rall.\",\n      \"kind\": \"rall\"\n    },\n    {\n      \"beat\": 691.0,\n      \"text\": \"ten.\",\n      \"kind\": \"tempo\"\n    },\n    {\n      \"beat\": 703.0,\n      \"text\": \"ten.\",\n      \"kind\": \"tempo\"\n    },\n    {\n      \"beat\": 736.0,\n      \"text\": \"più animato\",\n      \"kind\": \"tempo\"\n    },\n    {\n      \"beat\": 808.0,\n      \"text\": \"animato\",\n      \"kind\": \"tempo\"\n    },\n    {\n      \"beat\": 1066.0,\n      \"text\": \"ten.\",\n      \"kind\": \"tempo\"\n    },\n    {\n      \"beat\": 1072.0,\n      \"text\": \"ten.\",\n      \"kind\": \"tempo\"\n    },\n    {\n      \"beat\": 1126.0,\n      \"text\": \"riten.\",\n      \"kind\": \"rall\"\n    },\n    {\n      \"beat\": 1132.0,\n      \"text\": \"più rall.\",\n      \"kind\": \"rall\"\n    },\n    {\n      \"beat\": 1144.0,\n      \"text\": \"Meno mosso\",\n      \"kind\": \"tempo\"\n    },\n    {\n      \"beat\": 1225.0,\n      \"text\": \"poco riten.\",\n      \"kind\": \"rall\"\n    },\n    {\n      \"beat\": 1228.0,\n      \"text\": \"Presto con fuoco\",\n      \"kind\": \"tempo\"\n    },\n    {\n      \"beat\": 1406.0,\n      \"text\": \"riten.\",\n      \"kind\": \"rall\"\n    },\n    {\n      \"beat\": 1410.33,\n      \"text\": \"accel.\",\n      \"kind\": \"accel\"\n    },\n    {\n      \"beat\": 1422.0,\n      \"text\": \"riten.\",\n      \"kind\": \"rall\"\n    },\n    {\n      \"beat\": 1426.33,\n      \"text\": \"accel.\",\n      \"kind\": \"accel\"\n    },\n    {\n      \"beat\": 1430.0,\n      \"text\": \"poco riten.\",\n      \"kind\": \"rall\"\n    },\n    {\n      \"beat\": 1434.0,\n      \"text\": \"accelerando\",\n      \"kind\": \"accel\"\n    },\n    {\n      \"beat\": 1452.0,\n      \"text\": \"fermata\",\n      \"kind\": \"fermata\"\n    },\n    {\n      \"beat\": 1452.0,\n      \"text\": \"fermata\",\n      \"kind\": \"fermata\"\n    }\n  ]\n}\n```\n\nProduce ONLY the output JSON. No commentary, no Markdown fencing.\n",
+  "timestamp_utc": "20260415_202051",
+  "mode": "live",
+  "api_result": {
+    "backend": "claude_cli",
+    "binary": "/ssddata/home/ykim3098/.cursor-server/extensions/anthropic.claude-code-2.1.109-linux-x64/resources/native-binary/claude",
+    "model": "claude-code-default",
+    "temperature": 0.0,
+    "elapsed_s": 159.5,
+    "stderr": "",
+    "content": "```json\n{\n  \"piece_id\": \"chopin_ballade1\",\n  \"score_beat_max\": 1456.0,\n  \"markings_annotated\": [\n    {\"beat\": 0.0, \"text\": \"Lento\", \"kind\": \"tempo\", \"gamma\": 0.30, \"reasoning\": \"Direct lookup: lento = 0.30.\"},\n    {\"beat\": 28.0, \"text\": \"Moderato\", \"kind\": \"tempo\", \"gamma\": 1.00, \"reasoning\": \"Direct lookup: moderato = 1.00 (reference tempo).\"},\n    {\"beat\": 166.0, \"text\": \"ritenuto\", \"kind\": \"rall\", \"gamma\": 0.75, \"reasoning\": \"Ritenuto applies 0.75× to prevailing Moderato (1.00).\"},\n    {\"beat\": 221.0, \"text\": \"agitato\", \"kind\": \"tempo\", \"gamma\": 1.49, \"reasoning\": \"Direct lookup: agitato = 1.49.\"},\n    {\"beat\": 244.0, \"text\": \"sempre più mosso\", \"kind\": \"tempo\", \"gamma\": 1.755, \"reasoning\": \"Più mosso (1.35) strengthened by sempre più ×1.3.\"},\n    {\"beat\": 370.0, \"text\": \"riten.\", \"kind\": \"rall\", \"gamma\": 1.316, \"reasoning\": \"Ritenuto applies 0.75× to prevailing 1.755.\"},\n    {\"beat\": 387.0, \"text\": \"Meno mosso\", \"kind\": \"tempo\", \"gamma\": 0.74, \"reasoning\": \"Direct lookup: meno mosso = 0.74.\"},\n    {\"beat\": 532.0, \"text\": \"rall.\", \"kind\": \"rall\", \"gamma\": 0.555, \"reasoning\": \"Rallentando applies 0.75× to prevailing 0.74.\"},\n    {\"beat\": 691.0, \"text\": \"ten.\", \"kind\": \"tempo\", \"gamma\": 0.74, \"reasoning\": \"Tenuto is a local stress; preserves prevailing meno mosso tempo.\"},\n    {\"beat\": 703.0, \"text\": \"ten.\", \"kind\": \"tempo\", \"gamma\": 0.74, \"reasoning\": \"Second tenuto; preserves prevailing meno mosso tempo.\"},\n    {\"beat\": 736.0, \"text\": \"più animato\", \"kind\": \"tempo\", \"gamma\": 1.49, \"reasoning\": \"Animato (1.35) intensified by più prefix toward agitato level.\"},\n    {\"beat\": 808.0, \"text\": \"animato\", \"kind\": \"tempo\", \"gamma\": 1.35, \"reasoning\": \"Direct lookup: animato = 1.35.\"},\n    {\"beat\": 1066.0, \"text\": \"ten.\", \"kind\": \"tempo\", \"gamma\": 1.35, \"reasoning\": \"Tenuto preserves prevailing animato tempo.\"},\n    {\"beat\": 1072.0, \"text\": \"ten.\", \"kind\": \"tempo\", \"gamma\": 1.35, \"reasoning\": \"Tenuto preserves prevailing animato tempo.\"},\n    {\"beat\": 1126.0, \"text\": \"riten.\", \"kind\": \"rall\", \"gamma\": 1.0125, \"reasoning\": \"Ritenuto applies 0.75× to prevailing animato (1.35).\"},\n    {\"beat\": 1132.0, \"text\": \"più rall.\", \"kind\": \"rall\", \"gamma\": 0.76, \"reasoning\": \"Additional rall. stacked after riten.; 1.0125 × 0.75.\"},\n    {\"beat\": 1144.0, \"text\": \"Meno mosso\", \"kind\": \"tempo\", \"gamma\": 0.74, \"reasoning\": \"Direct lookup: meno mosso = 0.74.\"},\n    {\"beat\": 1225.0, \"text\": \"poco riten.\", \"kind\": \"rall\", \"gamma\": 0.6475, \"reasoning\": \"Poco weakens ritenuto magnitude ×0.5 → 0.875× of 0.74.\"},\n    {\"beat\": 1228.0, \"text\": \"Presto con fuoco\", \"kind\": \"tempo\", \"gamma\": 3.00, \"reasoning\": \"Direct lookup: presto = 3.00; con fuoco retains presto energy.\"},\n    {\"beat\": 1406.0, \"text\": \"riten.\", \"kind\": \"rall\", \"gamma\": 2.25, \"reasoning\": \"Ritenuto applies 0.75× to prevailing Presto (3.00).\"},\n    {\"beat\": 1410.33, \"text\": \"accel.\", \"kind\": \"accel\", \"gamma\": 3.0375, \"reasoning\": \"Accelerando applies 1.35× to prevailing 2.25.\"},\n    {\"beat\": 1422.0, \"text\": \"riten.\", \"kind\": \"rall\", \"gamma\": 2.278, \"reasoning\": \"Ritenuto applies 0.75× to prevailing 3.0375.\"},\n    {\"beat\": 1426.33, \"text\": \"accel.\", \"kind\": \"accel\", \"gamma\": 3.075, \"reasoning\": \"Accelerando applies 1.35× to prevailing 2.278.\"},\n    {\"beat\": 1430.0, \"text\": \"poco riten.\", \"kind\": \"rall\", \"gamma\": 2.691, \"reasoning\": \"Poco-weakened ritenuto: 0.875× of prevailing 3.075.\"},\n    {\"beat\": 1434.0, \"text\": \"accelerando\", \"kind\": \"accel\", \"gamma\": 3.633, \"reasoning\": \"Accelerando applies 1.35× to prevailing 2.691 (coda drive).\"},\n    {\"beat\": 1452.0, \"text\": \"fermata\", \"kind\": \"fermata\", \"gamma\": 0.35, \"reasoning\": \"Fermata local hold: gamma=0.35 for final beat.\"},\n    {\"beat\": 1452.0, \"text\": \"fermata\", \"kind\": \"fermata\", \"gamma\": 0.35, \"reasoning\": \"Duplicate fermata at terminal beat; same hold value.\"}\n  ],\n  \"sections\": [\n    [0.0, 28.0, 0.30, 1.00],\n    [28.0, 166.0, 1.00, 0.75],\n    [166.0, 221.0, 0.75, 1.49],\n    [221.0, 244.0, 1.49, 1.755],\n    [244.0, 370.0, 1.755, 1.316],\n    [370.0, 387.0, 1.316, 0.74],\n    [387.0, 532.0, 0.74, 0.555],\n    [532.0, 691.0, 0.555, 0.74],\n    [691.0, 703.0, 0.74, 0.74],\n    [703.0, 736.0, 0.74, 1.49],\n    [736.0, 808.0, 1.49, 1.35],\n    [808.0, 1066.0, 1.35, 1.35],\n    [1066.0, 1072.0, 1.35, 1.35],\n    [1072.0, 1126.0, 1.35, 1.0125],\n    [1126.0, 1132.0, 1.0125, 0.76],\n    [1132.0, 1144.0, 0.76, 0.74],\n    [1144.0, 1225.0, 0.74, 0.6475],\n    [1225.0, 1228.0, 0.6475, 3.00],\n    [1228.0, 1406.0, 3.00, 2.25],\n    [1406.0, 1410.33, 2.25, 3.0375],\n    [1410.33, 1422.0, 3.0375, 2.278],\n    [1422.0, 1426.33, 2.278, 3.075],\n    [1426.33, 1430.0, 3.075, 2.691],\n    [1430.0, 1434.0, 2.691, 3.633],\n    [1434.0, 1452.0, 3.633, 0.35],\n    [1452.0, 1456.0, 0.35, 0.35]\n  ]\n}\n```\n"
+  },
+  "parsed_response": {
+    "piece_id": "chopin_ballade1",
+    "score_beat_max": 1456.0,
+    "markings_annotated": [
+      {
+        "beat": 0.0,
+        "text": "Lento",
+        "kind": "tempo",
+        "gamma": 0.3,
+        "reasoning": "Direct lookup: lento = 0.30."
+      },
+      {
+        "beat": 28.0,
+        "text": "Moderato",
+        "kind": "tempo",
+        "gamma": 1.0,
+        "reasoning": "Direct lookup: moderato = 1.00 (reference tempo)."
+      },
+      {
+        "beat": 166.0,
+        "text": "ritenuto",
+        "kind": "rall",
+        "gamma": 0.75,
+        "reasoning": "Ritenuto applies 0.75× to prevailing Moderato (1.00)."
+      },
+      {
+        "beat": 221.0,
+        "text": "agitato",
+        "kind": "tempo",
+        "gamma": 1.49,
+        "reasoning": "Direct lookup: agitato = 1.49."
+      },
+      {
+        "beat": 244.0,
+        "text": "sempre più mosso",
+        "kind": "tempo",
+        "gamma": 1.755,
+        "reasoning": "Più mosso (1.35) strengthened by sempre più ×1.3."
+      },
+      {
+        "beat": 370.0,
+        "text": "riten.",
+        "kind": "rall",
+        "gamma": 1.316,
+        "reasoning": "Ritenuto applies 0.75× to prevailing 1.755."
+      },
+      {
+        "beat": 387.0,
+        "text": "Meno mosso",
+        "kind": "tempo",
+        "gamma": 0.74,
+        "reasoning": "Direct lookup: meno mosso = 0.74."
+      },
+      {
+        "beat": 532.0,
+        "text": "rall.",
+        "kind": "rall",
+        "gamma": 0.555,
+        "reasoning": "Rallentando applies 0.75× to prevailing 0.74."
+      },
+      {
+        "beat": 691.0,
+        "text": "ten.",
+        "kind": "tempo",
+        "gamma": 0.74,
+        "reasoning": "Tenuto is a local stress; preserves prevailing meno mosso tempo."
+      },
+      {
+        "beat": 703.0,
+        "text": "ten.",
+        "kind": "tempo",
+        "gamma": 0.74,
+        "reasoning": "Second tenuto; preserves prevailing meno mosso tempo."
+      },
+      {
+        "beat": 736.0,
+        "text": "più animato",
+        "kind": "tempo",
+        "gamma": 1.49,
+        "reasoning": "Animato (1.35) intensified by più prefix toward agitato level."
+      },
+      {
+        "beat": 808.0,
+        "text": "animato",
+        "kind": "tempo",
+        "gamma": 1.35,
+        "reasoning": "Direct lookup: animato = 1.35."
+      },
+      {
+        "beat": 1066.0,
+        "text": "ten.",
+        "kind": "tempo",
+        "gamma": 1.35,
+        "reasoning": "Tenuto preserves prevailing animato tempo."
+      },
+      {
+        "beat": 1072.0,
+        "text": "ten.",
+        "kind": "tempo",
+        "gamma": 1.35,
+        "reasoning": "Tenuto preserves prevailing animato tempo."
+      },
+      {
+        "beat": 1126.0,
+        "text": "riten.",
+        "kind": "rall",
+        "gamma": 1.0125,
+        "reasoning": "Ritenuto applies 0.75× to prevailing animato (1.35)."
+      },
+      {
+        "beat": 1132.0,
+        "text": "più rall.",
+        "kind": "rall",
+        "gamma": 0.76,
+        "reasoning": "Additional rall. stacked after riten.; 1.0125 × 0.75."
+      },
+      {
+        "beat": 1144.0,
+        "text": "Meno mosso",
+        "kind": "tempo",
+        "gamma": 0.74,
+        "reasoning": "Direct lookup: meno mosso = 0.74."
+      },
+      {
+        "beat": 1225.0,
+        "text": "poco riten.",
+        "kind": "rall",
+        "gamma": 0.6475,
+        "reasoning": "Poco weakens ritenuto magnitude ×0.5 → 0.875× of 0.74."
+      },
+      {
+        "beat": 1228.0,
+        "text": "Presto con fuoco",
+        "kind": "tempo",
+        "gamma": 3.0,
+        "reasoning": "Direct lookup: presto = 3.00; con fuoco retains presto energy."
+      },
+      {
+        "beat": 1406.0,
+        "text": "riten.",
+        "kind": "rall",
+        "gamma": 2.25,
+        "reasoning": "Ritenuto applies 0.75× to prevailing Presto (3.00)."
+      },
+      {
+        "beat": 1410.33,
+        "text": "accel.",
+        "kind": "accel",
+        "gamma": 3.0375,
+        "reasoning": "Accelerando applies 1.35× to prevailing 2.25."
+      },
+      {
+        "beat": 1422.0,
+        "text": "riten.",
+        "kind": "rall",
+        "gamma": 2.278,
+        "reasoning": "Ritenuto applies 0.75× to prevailing 3.0375."
+      },
+      {
+        "beat": 1426.33,
+        "text": "accel.",
+        "kind": "accel",
+        "gamma": 3.075,
+        "reasoning": "Accelerando applies 1.35× to prevailing 2.278."
+      },
+      {
+        "beat": 1430.0,
+        "text": "poco riten.",
+        "kind": "rall",
+        "gamma": 2.691,
+        "reasoning": "Poco-weakened ritenuto: 0.875× of prevailing 3.075."
+      },
+      {
+        "beat": 1434.0,
+        "text": "accelerando",
+        "kind": "accel",
+        "gamma": 3.633,
+        "reasoning": "Accelerando applies 1.35× to prevailing 2.691 (coda drive)."
+      },
+      {
+        "beat": 1452.0,
+        "text": "fermata",
+        "kind": "fermata",
+        "gamma": 0.35,
+        "reasoning": "Fermata local hold: gamma=0.35 for final beat."
+      },
+      {
+        "beat": 1452.0,
+        "text": "fermata",
+        "kind": "fermata",
+        "gamma": 0.35,
+        "reasoning": "Duplicate fermata at terminal beat; same hold value."
+      }
+    ],
+    "sections": [
+      [
+        0.0,
+        28.0,
+        0.3,
+        1.0
+      ],
+      [
+        28.0,
+        166.0,
+        1.0,
+        0.75
+      ],
+      [
+        166.0,
+        221.0,
+        0.75,
+        1.49
+      ],
+      [
+        221.0,
+        244.0,
+        1.49,
+        1.755
+      ],
+      [
+        244.0,
+        370.0,
+        1.755,
+        1.316
+      ],
+      [
+        370.0,
+        387.0,
+        1.316,
+        0.74
+      ],
+      [
+        387.0,
+        532.0,
+        0.74,
+        0.555
+      ],
+      [
+        532.0,
+        691.0,
+        0.555,
+        0.74
+      ],
+      [
+        691.0,
+        703.0,
+        0.74,
+        0.74
+      ],
+      [
+        703.0,
+        736.0,
+        0.74,
+        1.49
+      ],
+      [
+        736.0,
+        808.0,
+        1.49,
+        1.35
+      ],
+      [
+        808.0,
+        1066.0,
+        1.35,
+        1.35
+      ],
+      [
+        1066.0,
+        1072.0,
+        1.35,
+        1.35
+      ],
+      [
+        1072.0,
+        1126.0,
+        1.35,
+        1.0125
+      ],
+      [
+        1126.0,
+        1132.0,
+        1.0125,
+        0.76
+      ],
+      [
+        1132.0,
+        1144.0,
+        0.76,
+        0.74
+      ],
+      [
+        1144.0,
+        1225.0,
+        0.74,
+        0.6475
+      ],
+      [
+        1225.0,
+        1228.0,
+        0.6475,
+        3.0
+      ],
+      [
+        1228.0,
+        1406.0,
+        3.0,
+        2.25
+      ],
+      [
+        1406.0,
+        1410.33,
+        2.25,
+        3.0375
+      ],
+      [
+        1410.33,
+        1422.0,
+        3.0375,
+        2.278
+      ],
+      [
+        1422.0,
+        1426.33,
+        2.278,
+        3.075
+      ],
+      [
+        1426.33,
+        1430.0,
+        3.075,
+        2.691
+      ],
+      [
+        1430.0,
+        1434.0,
+        2.691,
+        3.633
+      ],
+      [
+        1434.0,
+        1452.0,
+        3.633,
+        0.35
+      ],
+      [
+        1452.0,
+        1456.0,
+        0.35,
+        0.35
+      ]
+    ]
+  }
+}
