@@ -1,4 +1,9 @@
 piece,perf,condition,n_beats,AR@100,AR@500,AR@1000,MedAE_s,MaxAE_s,MeanAE_s,LR_K5_%,Robust
+bach_bwv858,VuV01M,Dixon+CQT,120,2.5,57.5,74.2,0.46,2.46,0.68,25.0,✓
+beethoven_sonata_5_1,Colafelice02M,Dixon+CQT,847,68.1,95.6,97.2,0.07,3.82,0.16,89.9,✓
+beethoven_sonata_5_1,SunD02M,Dixon+CQT,847,80.9,96.6,98.8,0.06,3.81,0.1,91.3,✓
+beethoven_sonata_5_1,Wong01,Dixon+CQT,847,73.4,97.2,97.6,0.07,3.68,0.15,95.4,✓
+bps_21_1,GonzalezJ06M,Dixon+CQT,1205,79.3,94.5,95.5,0.05,12.11,0.36,91.8,✓
 chopin_ballade1,BuiJL04M,Dixon+CQT,653,7.0,21.9,28.6,13.11,65.12,19.97,8.9,✗
 chopin_ballade1,JIA06M,Dixon+CQT,653,6.1,12.3,14.7,26.65,48.27,23.69,6.2,✗
 chopin_ballade1,KimSuyeon04M,Dixon+CQT,653,10.1,17.3,19.4,19.2,53.22,20.39,12.5,✗
@@ -11,9 +16,26 @@ chopin_ballade_2,Gasanov08M,Dixon+CQT,408,32.1,71.1,81.9,0.21,12.53,0.8,52.2,✓
 chopin_ballade_2,Tetzloff06M,Dixon+CQT,408,19.4,65.7,79.2,0.28,13.87,0.93,35.6,✓
 chopin_ballade_3,Ko11M,Dixon+CQT,481,42.0,89.2,94.6,0.12,12.61,0.43,75.3,✓
 chopin_ballade_3,LinPeng06M,Dixon+CQT,481,43.5,85.7,90.9,0.12,7.73,0.35,66.7,✓
+chopin_barcarolle,Na03,Dixon+CQT,463,42.8,83.4,88.8,0.13,10.4,0.51,62.5,✓
 chopin_etude_10_12,Bult-ItoS04M,Dixon+CQT,334,40.7,86.2,94.9,0.14,5.39,0.34,68.8,✓
 chopin_etude_10_12,Floril02,Dixon+CQT,334,0.0,0.0,0.0,38.74,77.16,38.81,0.0,✗
 chopin_etude_10_12,Gintov02,Dixon+CQT,334,44.9,81.1,88.6,0.12,7.26,0.56,65.8,✓
+chopin_etude_10_12,Hirata02,Dixon+CQT,334,44.9,82.9,92.2,0.12,6.85,0.51,67.6,✓
+chopin_etude_10_12,HuNY03M,Dixon+CQT,334,40.4,81.4,87.1,0.14,7.84,0.64,69.7,✓
+chopin_etude_10_12,KimBenjamin04,Dixon+CQT,334,48.5,77.8,91.9,0.11,6.31,0.5,57.0,✓
+chopin_etude_10_12,LuoJ08M,Dixon+CQT,334,60.5,92.8,96.7,0.08,3.76,0.19,87.0,✓
+chopin_etude_10_12,Mordvinov04,Dixon+CQT,334,30.8,71.3,80.5,0.19,8.88,1.07,60.9,✓
+chopin_etude_10_12_Na_2006,02,Dixon+CQT,334,51.5,88.0,90.4,0.09,4.89,0.44,79.4,✓
+chopin_etude_10_12,Staupe02,Dixon+CQT,334,51.8,86.2,90.4,0.09,5.94,0.47,78.2,✓
+chopin_etude_10_12,WuuE06M,Dixon+CQT,334,47.6,87.7,92.2,0.1,6.76,0.4,80.9,✓
+chopin_etude_10_12,Yarden04,Dixon+CQT,334,24.6,61.1,71.6,0.39,12.89,1.9,43.3,✓
+chopin_etude_10_12,ZhangYunling02M,Dixon+CQT,334,58.1,90.7,95.2,0.09,5.32,0.26,83.9,✓
+bach_bwv858,VuV01M,Hybrid v1,120,2.5,57.5,74.2,0.46,2.46,0.68,25.0,✓
+beethoven_sonata_5_1,Colafelice02M,Hybrid v1,847,68.1,95.6,97.2,0.07,3.82,0.16,89.9,✓
+beethoven_sonata_5_1,SunD02M,Hybrid v1,847,80.9,96.6,98.8,0.06,3.81,0.1,91.3,✓
+beethoven_sonata_5_1,Wong01,Hybrid v1,847,73.4,97.2,97.6,0.07,3.68,0.15,95.4,✓
+bps_21_1,GonzalezJ06M,Hybrid v1,1205,79.3,94.5,95.5,0.05,12.11,0.36,91.8,✓
+bps_21_1,KimSY02M,Hybrid v1,1205,69.7,95.1,96.9,0.05,8.98,0.22,90.1,✓
 chopin_ballade1,BuiJL04M,Hybrid v1,653,24.5,48.7,57.1,0.55,29.85,4.15,29.7,✓
 chopin_ballade1,JIA06M,Hybrid v1,653,7.2,17.0,19.6,26.92,92.86,37.07,10.9,✗
 chopin_ballade1,KimSuyeon04M,Hybrid v1,653,23.4,49.2,57.9,0.53,28.78,4.49,30.5,✓
@@ -26,26 +48,74 @@ chopin_ballade_2,Gasanov08M,Hybrid v1,408,35.5,63.7,74.0,0.23,10.0,1.58,42.1,✓
 chopin_ballade_2,Tetzloff06M,Hybrid v1,408,9.1,18.4,22.3,26.58,62.87,23.52,7.2,✗
 chopin_ballade_3,Ko11M,Hybrid v1,481,42.0,89.2,94.6,0.12,12.61,0.43,75.3,✓
 chopin_ballade_3,LinPeng06M,Hybrid v1,481,43.5,85.7,90.9,0.12,7.73,0.35,66.7,✓
+chopin_barcarolle,Na03,Hybrid v1,463,57.5,87.3,94.0,0.06,2.49,0.23,65.8,✓
 chopin_etude_10_12,Bult-ItoS04M,Hybrid v1,334,40.7,86.2,94.9,0.14,5.39,0.34,68.8,✓
 chopin_etude_10_12,Floril02,Hybrid v1,334,0.0,0.0,0.0,38.74,77.16,38.81,0.0,✗
 chopin_etude_10_12,Gintov02,Hybrid v1,334,44.9,81.1,88.6,0.12,7.26,0.56,65.8,✓
 chopin_etude_10_12,Hirata02,Hybrid v1,334,44.9,82.9,92.2,0.12,6.85,0.51,67.6,✓
+chopin_etude_10_12,HuNY03M,Hybrid v1,334,40.4,81.4,87.1,0.14,7.84,0.64,69.7,✓
+chopin_etude_10_12,KimBenjamin04,Hybrid v1,334,48.5,77.8,91.9,0.11,6.31,0.5,57.0,✓
+chopin_etude_10_12,LuoJ08M,Hybrid v1,334,60.5,92.8,96.7,0.08,3.76,0.19,87.0,✓
+chopin_etude_10_12,Mordvinov04,Hybrid v1,334,30.8,71.3,80.5,0.19,8.88,1.07,60.9,✓
+chopin_etude_10_12_Na_2006,02,Hybrid v1,334,51.5,88.0,90.4,0.09,4.89,0.44,79.4,✓
+chopin_etude_10_12,Staupe02,Hybrid v1,334,51.8,86.2,90.4,0.09,5.94,0.47,78.2,✓
+chopin_etude_10_12,WuuE06M,Hybrid v1,334,47.6,87.7,92.2,0.1,6.76,0.4,80.9,✓
+chopin_etude_10_12,Yarden04,Hybrid v1,334,24.6,61.1,71.6,0.39,12.89,1.9,43.3,✓
+chopin_etude_10_12,ZhangYunling02M,Hybrid v1,334,58.1,90.7,95.2,0.09,5.32,0.26,83.9,✓
 chopin_ballade1,BuiJL04M,Hybrid v2,653,23.3,47.8,56.5,0.6,29.92,4.65,29.0,✓
 chopin_ballade1,JIA06M,Hybrid v2,653,7.2,17.0,19.6,26.98,92.82,37.08,10.9,✗
+chopin_ballade1,KimSuyeon04M,Hybrid v2,653,22.2,48.4,57.3,0.56,28.81,4.52,29.3,✓
+chopin_ballade1,Mo07M,Hybrid v2,653,7.8,14.9,16.4,28.5,115.31,39.67,9.7,✗
+chopin_ballade1,Richardson13M,Hybrid v2,653,10.7,16.5,17.8,22.59,106.2,33.25,11.1,✗
+chopin_ballade1,Sladek04M,Hybrid v2,653,10.7,25.6,30.0,9.36,56.99,21.48,14.3,✗
 chopin_ballade1,BuiJL04M,Dixon+CQT v2-eval,653,7.0,21.9,28.6,13.11,65.12,19.97,8.9,✗
 chopin_ballade1,JIA06M,Dixon+CQT v2-eval,653,6.1,12.3,14.7,26.65,48.27,23.69,6.2,✗
 chopin_ballade1,KimSuyeon04M,Dixon+CQT v2-eval,653,10.1,17.3,19.4,19.2,53.22,20.39,12.5,✗
+chopin_ballade1,Mo07M,Dixon+CQT v2-eval,653,9.0,29.1,34.8,11.9,75.23,25.35,12.6,✗
+chopin_ballade1,Richardson13M,Dixon+CQT v2-eval,653,9.3,17.6,19.4,19.36,61.74,24.59,10.9,✗
+chopin_ballade1,Sladek04M,Dixon+CQT v2-eval,653,10.7,25.6,30.0,9.36,56.99,21.48,14.3,✗
+chopin_ballade1,Zhou06M,Dixon+CQT v2-eval,653,11.3,25.0,29.7,13.93,49.95,17.73,14.6,✗
 chopin_ballade1,BuiJL04M,Pass1 rule,653,24.5,48.7,57.1,0.55,29.85,4.15,29.7,✓
 chopin_ballade1,JIA06M,Pass1 rule,653,7.2,17.0,19.6,26.92,92.86,37.07,10.9,✗
 chopin_ballade1,KimSuyeon04M,Pass1 rule,653,23.4,49.2,57.9,0.53,28.78,4.49,30.5,✓
 chopin_ballade1,Mo07M,Pass1 rule,653,8.1,14.9,16.5,28.5,115.34,39.67,9.7,✗
 chopin_ballade1,Richardson13M,Pass1 rule,653,10.7,16.5,17.8,22.59,107.01,33.25,11.1,✗
+chopin_ballade1,Sladek04M,Pass1 rule,653,4.9,8.9,10.6,65.78,168.53,65.93,4.3,✗
+chopin_ballade1,Zhou06M,Pass1 rule,653,11.3,23.3,27.6,19.11,80.02,27.51,14.2,✗
+chopin_ballade_2,Denisova17M,Pass1 rule,408,8.6,19.9,22.1,43.5,74.8,33.75,12.9,✗
+chopin_ballade_2,Gasanov08M,Pass1 rule,408,35.5,63.7,74.0,0.23,10.0,1.58,42.1,✓
+chopin_ballade_2,Tetzloff06M,Pass1 rule,408,9.1,18.4,22.3,26.58,62.87,23.52,7.2,✗
+chopin_barcarolle,Na03,Pass1 rule,463,57.5,87.3,94.0,0.06,2.49,0.23,65.8,✓
+chopin_etude_25_11,KimSuyeon03M,Pass1 rule,381,26.0,50.7,56.7,0.48,23.78,4.35,37.1,✓
+chopin_etude_25_11,KyykhynenT10M,Pass1 rule,381,31.5,53.5,57.7,0.35,31.43,6.15,43.0,✓
+chopin_etude_25_11,Lisiecki07M,Pass1 rule,381,39.4,62.5,67.5,0.19,19.62,3.18,50.9,✓
+chopin_etude_25_11,MiyashitaM03M,Pass1 rule,381,65.6,85.0,89.0,0.05,12.97,0.52,79.0,✓
+schubert_impromptu_3,Hou06M,Pass1 rule,341,4.7,10.6,14.1,33.03,91.5,34.72,3.9,✗
 chopin_ballade1,BuiJL04M,Pass2 gated,653,14.2,28.2,33.2,3.52,50.9,10.23,21.4,✗
 chopin_ballade1,JIA06M,Pass2 gated,653,0.6,1.4,2.8,39.04,90.82,40.11,0.0,✗
 chopin_ballade1,KimSuyeon04M,Pass2 gated,653,11.8,31.1,38.1,2.94,42.82,7.84,20.0,✗
 chopin_ballade1,Mo07M,Pass2 gated,653,16.1,30.3,33.2,9.09,49.92,13.52,24.3,✗
+chopin_ballade1,Richardson13M,Pass2 gated,653,0.2,0.3,1.2,31.32,99.78,36.08,0.0,✗
+chopin_ballade1,Sladek04M,Pass2 gated,653,7.7,14.7,16.8,33.94,100.23,36.21,10.2,✗
+chopin_ballade1,Zhou06M,Pass2 gated,653,10.7,23.1,27.1,24.63,72.04,25.83,14.6,✗
+chopin_ballade_2,Denisova17M,Pass2 gated,408,8.6,19.9,21.8,43.58,74.8,33.81,12.9,✗
+chopin_ballade_2,Gasanov08M,Pass2 gated,408,32.8,63.5,74.8,0.25,10.0,1.58,40.1,✓
+chopin_ballade_2,Tetzloff06M,Pass2 gated,408,8.8,17.9,22.1,26.7,62.87,23.59,7.2,✗
+chopin_barcarolle,Na03,Pass2 gated,463,55.5,86.8,94.8,0.07,2.59,0.23,65.8,✓
+chopin_etude_25_11,KimSuyeon03M,Pass2 gated,381,28.6,52.0,57.5,0.42,23.78,4.31,39.5,✓
+chopin_etude_25_11,KyykhynenT10M,Pass2 gated,381,31.0,53.5,57.7,0.35,31.43,6.13,43.0,✓
+chopin_etude_25_11,Lisiecki07M,Pass2 gated,381,39.6,62.2,67.5,0.19,19.69,3.2,50.7,✓
 chopin_ballade1,BuiJL04M,Unified Dixon v2,653,0.6,1.7,2.5,39.04,58.79,35.37,0.0,✗
 chopin_ballade1,JIA06M,Unified Dixon v2,653,6.1,12.4,14.9,26.59,55.62,24.85,6.2,✗
 chopin_ballade1,KimSuyeon04M,Unified Dixon v2,653,10.1,17.3,19.4,19.11,53.22,21.2,12.5,✗
+chopin_ballade1,Mo07M,Unified Dixon v2,653,7.4,14.9,16.4,23.75,52.93,21.09,8.6,✗
+chopin_ballade1,Richardson13M,Unified Dixon v2,653,9.2,17.6,19.4,19.22,61.74,24.6,10.9,✗
+chopin_ballade1,Sladek04M,Unified Dixon v2,653,10.7,25.6,30.2,10.95,60.75,22.7,14.3,✗
+chopin_ballade1,Zhou06M,Unified Dixon v2,653,11.3,24.8,29.7,13.93,49.95,17.85,13.9,✗
 chopin_ballade1,BuiJL04M,Dixon baseline (UD-eval),653,7.0,21.9,28.6,13.11,65.12,19.97,8.9,✗
 chopin_ballade1,JIA06M,Dixon baseline (UD-eval),653,6.1,12.3,14.7,26.65,48.27,23.69,6.2,✗
+chopin_ballade1,KimSuyeon04M,Dixon baseline (UD-eval),653,10.1,17.3,19.4,19.2,53.22,20.39,12.5,✗
+chopin_ballade1,Mo07M,Dixon baseline (UD-eval),653,9.0,29.1,34.8,11.9,75.23,25.35,12.6,✗
+chopin_ballade1,Richardson13M,Dixon baseline (UD-eval),653,9.3,17.6,19.4,19.36,61.74,24.59,10.9,✗
+chopin_ballade1,Sladek04M,Dixon baseline (UD-eval),653,10.7,25.6,30.0,9.36,56.99,21.48,14.3,✗
+chopin_ballade1,Zhou06M,Dixon baseline (UD-eval),653,11.3,25.0,29.7,13.93,49.95,17.73,14.6,✗
