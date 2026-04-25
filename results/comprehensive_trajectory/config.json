@@ -1,0 +1,16 @@
+{
+  "pilot_pieces": [
+    "chopin_ballade1",
+    "chopin_ballade_2",
+    "bach_prelude_848"
+  ],
+  "perf_per_piece": 2,
+  "conditions": [
+    "C1_baseline",
+    "C2_global_retempo"
+  ],
+  "stages": {
+    "C1_baseline": "Dixon+CQT, no plan, no retempo",
+    "C2_global_retempo": "Dixon+CQT, Pass-1 \u03c1 \u2192 reference re-render at \u03c1\u00b7T_0"
+  }
+}
