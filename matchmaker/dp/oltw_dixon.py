@@ -347,7 +347,12 @@ class OnlineTimeWarpingDixon(OnlineAlignment):
         return next_direction
 
     def get_new_input(self):
-        input_feature, f_time = self.queue.get(timeout=QUEUE_TIMEOUT)
+        item = self.queue.get(timeout=QUEUE_TIMEOUT)
+        if item is None:
+            # End-of-stream sentinel: stop following
+            self.ref_pointer = self.N_ref  # force exit from is_still_following()
+            return
+        input_feature, f_time = item
         self.last_queue_update = time.time()
         self.input_features = np.vstack([self.input_features, input_feature])
         self.input_pointer += self.frame_per_seg
@@ -418,3 +423,81 @@ class OnlineTimeWarpingDixon(OnlineAlignment):
             pbar.finish()
 
         return self.wp
+
+
+class OnlineTimeWarpingDixonPlus(OnlineTimeWarpingDixon):
+    """
+    Dixon OLTW + PerformancePlan (SCORPION).
+
+    Extends Dixon with PerformancePlan-driven direction bias.
+    When the plan predicts the performer is faster (gamma > 1),
+    allows more consecutive TARGET steps; when slower, more REF steps.
+    """
+
+    def __init__(
+        self,
+        reference_features,
+        queue,
+        window_size=WINDOW_SIZE,
+        distance_func="euclidean",
+        max_run_count=MAX_RUN_COUNT,
+        frame_per_seg=FRAME_PER_SEG,
+        frame_rate=FRAME_RATE,
+        performance_plan=None,
+        tempo_bpm: float = 120.0,
+        **kwargs,
+    ):
+        super().__init__(
+            reference_features=reference_features,
+            queue=queue,
+            window_size=window_size,
+            distance_func=distance_func,
+            max_run_count=max_run_count,
+            frame_per_seg=frame_per_seg,
+            frame_rate=frame_rate,
+        )
+        self.performance_plan = performance_plan
+        self.tempo_bpm = tempo_bpm
+        self.base_max_run_count = max_run_count
+
+    def _current_beat(self):
+        return self.current_position / self.frame_rate * (self.tempo_bpm / 60.0)
+
+    def select_candidate(self):
+        """Override candidate selection with tempo-aware cost bias.
+
+        When gamma > 1 (performer faster than reference), bias toward
+        TARGET direction by discounting TARGET edge costs.
+        When gamma < 1 (performer slower), bias toward REF direction.
+        """
+        gamma = 1.0
+        if self.performance_plan is not None:
+            beat = self._current_beat()
+            params = self.performance_plan.get_params(int(beat))
+            gamma = float(params[0]) if isinstance(params, tuple) else 1.0
+            gamma = np.clip(gamma, 0.3, 3.0)
+
+        norm_x_edge = self.acc_dist_matrix[-1, :] / self.acc_len_matrix[-1, :]
+        norm_y_edge = self.acc_dist_matrix[:, -1] / self.acc_len_matrix[:, -1]
+
+        # Apply dampened tempo bias (exponent 0.1 to avoid overwhelming DTW cost)
+        # gamma > 1 → performer faster → slightly prefer TARGET (y)
+        # gamma < 1 → performer slower → slightly prefer REF (x)
+        bias_exponent = 0.1
+        if gamma > 1.0:
+            norm_y_edge = norm_y_edge * (1.0 / gamma) ** bias_exponent
+        elif gamma < 1.0:
+            norm_x_edge = norm_x_edge * gamma ** bias_exponent
+
+        cat = np.concatenate((norm_x_edge, norm_y_edge))
+        min_idx = np.argmin(cat)
+        offset = self.offset()
+        if min_idx <= len(norm_x_edge):
+            self.candidate = np.array([self.ref_pointer - offset[0], min_idx])
+        else:
+            self.candidate = np.array(
+                [min_idx - len(norm_x_edge), self.input_pointer - offset[1]]
+            )
+
+    def select_next_direction(self):
+        return super().select_next_direction()

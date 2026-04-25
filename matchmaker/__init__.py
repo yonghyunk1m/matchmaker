@@ -4,7 +4,7 @@
 Matchmaker is a library for real-time music alignment
 """
 
-import pkg_resources
+from pathlib import Path
 
 from . import dp, features, io, prob, utils
 from .matchmaker import *
@@ -12,28 +12,14 @@ from .matchmaker import *
 __all__ = ["dp", "features", "io", "prob", "utils"]
 
 try:
-    import pkg_resources
+    from importlib.metadata import version
 
-    __version__ = pkg_resources.get_distribution("pymatchmaker").version
+    __version__ = version("pymatchmaker")
 except Exception:  # pragma: no cover
     __version__ = "0.2.1"
 
-EXAMPLE_SCORE = pkg_resources.resource_filename(
-    "matchmaker",
-    "assets/mozart_k265_var1.musicxml",
-)
-
-EXAMPLE_PERFORMANCE = pkg_resources.resource_filename(
-    "matchmaker",
-    "assets/mozart_k265_var1.mid",
-)
-
-EXAMPLE_MATCH = pkg_resources.resource_filename(
-    "matchmaker",
-    "assets/mozart_k265_var1.match",
-)
-
-EXAMPLE_AUDIO = pkg_resources.resource_filename(
-    "matchmaker",
-    "assets/mozart_k265_var1.mp3",
-)
+_ASSETS_DIR = Path(__file__).resolve().parent / "assets"
+EXAMPLE_SCORE = str(_ASSETS_DIR / "mozart_k265_var1.musicxml")
+EXAMPLE_PERFORMANCE = str(_ASSETS_DIR / "mozart_k265_var1.mid")
+EXAMPLE_MATCH = str(_ASSETS_DIR / "mozart_k265_var1.match")
+EXAMPLE_AUDIO = str(_ASSETS_DIR / "mozart_k265_var1.mp3")

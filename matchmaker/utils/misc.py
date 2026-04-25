@@ -242,34 +242,39 @@ def get_current_note_bpm(score: ScoreLike, onset_beat: float, tempo: float) -> f
     return latest_change["beat_type"] / 4 * tempo if latest_change else tempo
 
 
-def generate_score_audio(score: ScoreLike, bpm: float, samplerate: int):
+def generate_score_audio(score: ScoreLike, bpm: float, samplerate: int, soundfont: str = None):
+    # Note: onset_beat is always in quarter-note units (partitura convention),
+    # so the BPM should be used directly without beat_type adjustment.
+    # The original get_current_note_bpm multiplied by beat_type/4, which
+    # caused 2-4x speedup for non-4/4 time signatures (12/8, 12/16, etc.).
     bpm_array = [
-        [onset_beat, get_current_note_bpm(score, onset_beat, bpm)]
+        [onset_beat, bpm]
         for onset_beat in score.note_array()["onset_beat"]
     ]
     bpm_array = np.array(bpm_array)
+    import os
+    sf = soundfont or os.environ.get('MATCHMAKER_SOUNDFONT', None)
+    kwargs = dict(bpm=bpm_array, samplerate=samplerate)
+    if sf is not None:
+        kwargs["soundfont"] = sf
     score_audio = partitura.save_wav_fluidsynth(
         score,
-        bpm=bpm_array,
-        samplerate=samplerate,
+        **kwargs,
     )
 
+    # Padding and truncation use beat * (60/bpm) directly.
+    # The original inv_beat_map/quarter_duration_map formula is incorrect
+    # for non-4/4 time signatures (12/8, 12/16) because quarter_duration_map
+    # returns divs-per-quarter-note, not divs-per-beat-unit.
     first_onset_in_beat = score.note_array()["onset_beat"].min()
-    first_onset_in_time = (
-        score.inv_beat_map(first_onset_in_beat)
-        / score.quarter_duration_map(score.inv_beat_map(first_onset_in_beat))
-        * (60 / bpm)
-    )
-    # add padding to the beginning of the score audio
-    padding_size = int(first_onset_in_time * samplerate)
-    score_audio = np.pad(score_audio, (padding_size, 0))
+    first_onset_in_time = first_onset_in_beat * (60.0 / bpm)
+    # add padding to the beginning of the score audio (skip if negative/pickup)
+    padding_size = max(int(first_onset_in_time * samplerate), 0)
+    if padding_size > 0:
+        score_audio = np.pad(score_audio, (padding_size, 0))
 
-    last_onset_in_div = np.floor(score.note_array()["onset_div"].max())
-    last_onset_in_time = (
-        last_onset_in_div
-        / score.quarter_duration_map(score.inv_beat_map(last_onset_in_div))
-        * (60 / bpm)
-    )
+    last_onset_in_beat = score.note_array()["onset_beat"].max()
+    last_onset_in_time = last_onset_in_beat * (60.0 / bpm)
 
     buffer_size = 0.1  # for assuring the last onset is included (in seconds)
     last_onset_in_time += buffer_size

@@ -65,6 +65,114 @@ class ChromagramProcessor(Processor):
         return chroma.T
 
 
+class CQTChromagramProcessor(Processor):
+    """CQT-based chroma. Drop-in replacement for ChromagramProcessor.
+    CQT has logarithmic frequency resolution matching musical pitch,
+    reducing spectral leakage and synthesis-recording timbral gap."""
+
+    def __init__(
+        self,
+        sample_rate: int = SAMPLE_RATE,
+        hop_length: int = HOP_LENGTH,
+        n_chroma: int = N_CHROMA,
+        norm: Optional[Union[float, str]] = NORM,
+    ):
+        super().__init__()
+        self.sample_rate = sample_rate
+        self.hop_length = hop_length
+        self.n_chroma = n_chroma
+        self.norm = norm
+
+    def __call__(
+        self,
+        data: InputAudioFrame,
+    ) -> Tuple[Optional[np.ndarray], Dict]:
+        if isinstance(data, tuple):
+            y, f_time = data
+        else:
+            y = data
+        y = y.astype(np.float64)
+
+        # [SCORPION] Chunked CQT for long audio: librosa.feature.chroma_cqt
+        # on whole-piece input (e.g. 25-min Hammerklavier) silently produces
+        # corrupted chroma under memory pressure. We process in ~4-min chunks
+        # and concatenate, ensuring chunk boundaries are aligned to hop_length
+        # so the output frame grid matches whole-piece computation.
+        max_chunk_samples = 5_000_000  # ~4 min at 22.05 kHz
+        if len(y) <= max_chunk_samples:
+            chroma = librosa.feature.chroma_cqt(
+                y=y,
+                sr=self.sample_rate,
+                hop_length=self.hop_length,
+                n_chroma=self.n_chroma,
+                norm=self.norm,
+            )
+            return chroma.T.astype(np.float32)
+
+        # Process in hop-aligned chunks
+        chunk = (max_chunk_samples // self.hop_length) * self.hop_length
+        chroma_parts = []
+        for start in range(0, len(y), chunk):
+            end = min(start + chunk, len(y))
+            chunk_y = y[start:end]
+            if len(chunk_y) < self.hop_length * 16:
+                # Too short for CQT lowest-octave analysis; pad with zeros.
+                chunk_y = np.pad(chunk_y, (0, self.hop_length * 16 - len(chunk_y)))
+            chunk_chroma = librosa.feature.chroma_cqt(
+                y=chunk_y,
+                sr=self.sample_rate,
+                hop_length=self.hop_length,
+                n_chroma=self.n_chroma,
+                norm=self.norm,
+            )
+            # Trim to the expected number of frames for this chunk
+            expected_frames = (end - start + self.hop_length - 1) // self.hop_length
+            chroma_parts.append(chunk_chroma[:, :expected_frames])
+        chroma = np.concatenate(chroma_parts, axis=1)
+        return chroma.T.astype(np.float32)
+
+
+class StreamCQTChromagramProcessor(Processor):
+    """CQT chroma processor optimised for offline streaming audio.
+
+    The stream feeds audio in hop_length chunks. Calling librosa's CQT on each
+    tiny chunk is slow (padding overhead) and produces unreliable chroma.
+    Instead, this processor is bound to a known full audio buffer up front
+    (e.g. the entire performance audio loaded for mock_stream); it precomputes
+    chroma once, then returns the k-th precomputed frame per call. Drop-in
+    compatible with stream._process_feature which expects (2*hop_length,)
+    input and frame-level output.
+    """
+
+    def __init__(
+        self,
+        full_audio: np.ndarray,
+        sample_rate: int = SAMPLE_RATE,
+        hop_length: int = HOP_LENGTH,
+        n_chroma: int = N_CHROMA,
+        norm: Optional[Union[float, str]] = NORM,
+    ):
+        super().__init__()
+        self.sample_rate = sample_rate
+        self.hop_length = hop_length
+        self.n_chroma = n_chroma
+        self.norm = norm
+        base = CQTChromagramProcessor(
+            sample_rate=sample_rate, hop_length=hop_length,
+            n_chroma=n_chroma, norm=norm,
+        )
+        self._cache = base(full_audio)  # shape (T, n_chroma)
+        self._idx = 0
+
+    def __call__(self, data):
+        if isinstance(data, tuple):
+            _, _ = data
+        # Return the next precomputed frame (or the last, clipped).
+        i = min(self._idx, self._cache.shape[0] - 1)
+        self._idx += 1
+        return self._cache[i:i + 1]
+
+
 class ChromagramIOIProcessor(Processor):
     def __init__(
         self,

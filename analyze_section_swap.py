@@ -90,9 +90,16 @@ def total_metrics(df):
 def main():
     rows_per_perf = []
     rows_per_section = []
+    PIECE_IDS = sys.argv[1:] if len(sys.argv) > 1 else None
     for piece in PIECES:
-        if piece["id"] != "chopin_ballade1":
-            continue  # focus on Op.~23 first
+        if PIECE_IDS and piece["id"] not in PIECE_IDS:
+            continue
+        if not PIECE_IDS:
+            # Default: all pieces with at least one Pass2 trajectory
+            p2_dir = ROOT / "results/confidence_gated_v2/trajectories"
+            has_p2 = any(p2_dir.glob(f"{piece['id']}_*_pass2_v2.csv"))
+            if not has_p2:
+                continue
         xml_path = os.path.join(piece["asap_dir"], "xml_score.musicxml")
         score = pt.load_musicxml(xml_path).parts[0]
         max_beat = int(np.ceil(score.note_array()["onset_beat"].max())) + 10
