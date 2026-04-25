@@ -22,6 +22,7 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 TARGET_PIECES = {
     "chopin_etude_25_11", "schubert_impromptu_3",
     "chopin_scherzo_31", "bach_prelude_848",
+    "bps_31_1", "chopin_ballade_4", "bps_23_1",
 }
 
 
