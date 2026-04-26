@@ -43,8 +43,9 @@ OUT_DIR = Path("results/dixon_cqt_retempo")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 ASSIGNED = {
-    "chopin_ballade1", "chopin_ballade_2", "chopin_barcarolle",
-    "schubert_impromptu_3", "chopin_etude_25_11", "bach_prelude_848",
+    "bach_fugue_848", "bach_bwv858", "beethoven_sonata_5_1", "bps_21_1",
+    "chopin_ballade_3", "chopin_etude_10_4", "chopin_etude_10_12",
+    "liszt_campanella",
 }
 
 
