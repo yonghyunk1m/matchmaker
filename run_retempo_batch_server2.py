@@ -1,16 +1,20 @@
-"""Dixon+CQT+retempo per-beat trajectory generator for server 2's 4 pieces.
+"""Dixon+CQT+retempo per-beat trajectory generator for server 2.
 
-Reuses run_trajectory_full's C2_global_retempo logic but restricted to:
-  ASSIGNED = {chopin_scherzo_31, bps_31_1, chopin_ballade_4, bps_23_1}
-with all performers (no PERF_PER_PIECE limit).
+Batch 4: fill the 6 pieces missing from cooperative pool so the 4-tracker pool
+is symmetric across all 10 pieces in section_swap. Cached files (batch 3) are
+skipped automatically — this run only does the new pieces.
 
 Output: results/dixon_cqt_retempo/{piece}_{perf}_C2_global_retempo.csv
 
 Server 2 instructions:
   cd ~/matchmaker
-  git pull origin develop  # gets run_cqt_native.py
-  python3 run_retempo_batch_server2.py 2>&1 | tee /tmp/retempo.log
-  # then push results
+  git pull origin develop
+  python3 run_retempo_batch_server2.py 2>&1 | tee /tmp/retempo_b4.log
+  # then push results to a new branch:
+  git checkout -b retempo-trajectories-server2-batch4
+  git add results/dixon_cqt_retempo/*.csv
+  git commit -m "Server 2 batch 4: retempo trajectories for 6 pieces"
+  git push -u origin retempo-trajectories-server2-batch4
 """
 import os
 import pickle
@@ -38,7 +42,10 @@ from run_cqt_native import CQTChromagramProcessor, StreamCQTChromagramProcessor
 OUT_DIR = Path("results/dixon_cqt_retempo")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-ASSIGNED = {"chopin_scherzo_31", "bps_31_1", "chopin_ballade_4", "bps_23_1"}
+ASSIGNED = {
+    "chopin_ballade1", "chopin_ballade_2", "chopin_barcarolle",
+    "schubert_impromptu_3", "chopin_etude_25_11", "bach_prelude_848",
+}
 
 
 def run_pass1_get_global_ratio(piece, performer):
